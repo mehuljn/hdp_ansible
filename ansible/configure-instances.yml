@@ -1,0 +1,93 @@
+- hosts: all
+  connection: local
+
+  tasks:
+  - name: Wait for SSH to be available on Inventory Hosts
+    local_action: wait_for host={{ inventory_hostname }} port=22
+
+    
+- hosts: all
+  user: ubuntu
+  become_user: root
+  vars_files:
+  - "variables.yml"
+  gather_facts: False
+  
+  tasks:
+  - name: Copying PEM File to Instance
+    copy: src="~/{{ pemkey }}.pem" dest="/home/ubuntu/{{ pemkey }}.pem" owner=ubuntu mode=0400
+    
+  - name: Adding SSH Identity
+    lineinfile: dest=/etc/ssh/ssh_config insertafter=EOF line="Host *\n\tIdentityFile /home/ubuntu/{{ pemkey }}.pem"
+    sudo: yes
+    
+  - name: Copying hosts file to instance
+    copy: src="~/.ansible/local_inventory/hdp.hosts" dest=/etc/hosts
+    sudo: yes
+
+  - name: Create hostname in /etc/hostname
+    lineinfile: dest=/etc/hostname state=present create=yes regexp='.*' line="{{ internalhostname }}"
+    sudo: yes
+
+  - name: Set hostname in /etc/sysconfig/network
+    lineinfile: dest=/etc/sysconfig/network create=yes state=present regexp='HOSTNAME=.*' line="HOSTNAME={{ internalhostname }}"
+    sudo: yes
+
+  - name: Set hostname
+    shell: hostname {{ internalhostname }}  
+    sudo: yes
+
+#  - name: Stop iptables
+#    service: name=iptables state=stopped
+#    sudo: yes
+
+#  - name: Stop iptables6
+#    service: name=ip6tables state=stopped
+#    sudo: yes
+
+#  - name: Disabling SELinux
+#    lineinfile: dest=/etc/sysconfig/selinux regexp=^SELINUX= line=SELINUX=disabled
+#    sudo: yes
+
+#  - name: Disable SElinux permanently
+#    lineinfile: dest=/etc/selinux/config state=present create=no regexp='SELINUX=.*' line='SELINUX=disabled'
+#    sudo: yes
+
+  - name: Install NTP
+    apt:
+      pkg: ntp
+      state: installed
+    sudo: yes
+  
+  - name: Start NTP
+    service: name=ntp state=restarted
+    sudo: yes
+    
+  - name: Set networking yes
+    lineinfile: dest=/etc/sysconfig/network create=yes state=present regexp='NETWORKING=.*' line='NETWORKING=yes'
+    sudo: yes
+
+  # Download/Install Ambari Repo and Agent    
+    
+  - name: Create Ambari Repo
+    get_url: url={{ hdp_ambari_repo }} dest=/etc/apt/sources.list.d/ambari.list
+    sudo: yes
+
+  - name: Add APT key for Ambari Repo
+    apt_key: keyserver=keyserver.ubuntu.com id=B9733A7A07513CAD
+    sudo: yes
+
+  - name: Run APT update
+    apt:
+      update_cache: yes
+    sudo: yes
+    
+  - name: Install Ambari agent
+    apt:
+      pkg: ambari-agent
+      state: installed
+    sudo: yes
+
+  - name: Start Ambari agent
+    service: name=ambari-agent state=restarted  
+    sudo: yes

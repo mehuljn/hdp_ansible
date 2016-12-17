@@ -1,0 +1,48 @@
+{
+  "blueprint" : "blueprint",
+  "host_groups" :[
+    {
+      "name" : "host_group_1", 
+      "hosts" : [         
+        {
+          "fqdn" : MYCLUSTERMASTER1
+        }
+      ]
+    },
+    {
+      "name" : "host_group_2", 
+      "hosts" : [         
+        {
+          "fqdn" : MYCLUSTERMASTER2
+        }
+      ]
+    },
+
+    {
+      "name" : "host_group_3", 
+      "hosts" : [         
+        {
+          "fqdn" : MYCLUSTERSLAVE1
+        }
+      ]
+    },
+
+    {
+      "name" : "host_group_4", 
+      "hosts" : [         
+        {
+          "fqdn" : MYCLUSTERSLAVE2
+        }
+      ]
+    },
+
+    {
+      "name" : "host_group_5", 
+      "hosts" : [
+        {
+          "fqdn" : MYCLUSTERSLAVE3
+        }
+      ]
+    }
+  ]
+}

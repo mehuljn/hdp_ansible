@@ -1,0 +1,27 @@
+- hosts: all
+  user: ubuntu
+  sudo: True
+  vars_files:
+  - "variables.yml"
+  gather_facts: False
+  
+  tasks:
+
+  # Install and Start Ambari Server       
+    
+  - name: Install Ambari server
+    apt:
+      pkg: ambari-server
+      state: installed
+    sudo: yes
+
+  - name: Configure Ambari server
+    command: ambari-server setup -s
+    sudo: yes
+
+  - name: Start Ambari server
+    service: name=ambari-server state=restarted   
+    sudo: yes
+
+  - debug: msg="Ambari Server available at http://{{ inventory_hostname }}:8080"
+
